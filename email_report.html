@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; }
+        .container { max-width: 650px; margin: 0 auto; background-color: #1e293b; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); border: 1px solid #334155; }
+        .header { background-color: #0f172a; padding: 24px; border-bottom: 1px solid #334155; }
+        .header h2 { margin: 0 0 10px 0; font-size: 20px; color: #f8fafc; }
+        .badge { display: inline-block; padding: 4px 12px; font-size: 12px; font-weight: bold; border-radius: 9999px; color: #ffffff; background-color: {{ STATUS_COLOR }}; text-transform: uppercase; }
+        .content { padding: 24px; }
+        .meta-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .meta-table td { padding: 10px 12px; border-bottom: 1px solid #334155; font-size: 14px; }
+        .meta-table td.label { font-weight: 600; color: #94a3b8; width: 35%; }
+        .meta-table td.value { color: #f1f5f9; word-break: break-all; }
+        .footer { background-color: #0f172a; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }
+        .track-list { max-height: 200px; overflow-y: auto; background-color: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #cbd5e1; margin-top: 10px; }
+        .alert-box { background-color: #450a0a; border: 1px solid #991b1b; color: #fca5a5; padding: 14px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
+        .section-title { margin-top: 20px; margin-bottom: 5px; font-size: 14px; color: #f8fafc; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Playlist Downloader Sync</h2>
+            <span class="badge">{{ STATUS_BADGE }}</span>
+        </div>
+        <div class="content">
+            {{ ALERT_BOX_HTML }}
+            
+            <p style="color: #94a3b8; font-size: 14px;">Playlist transfer report summary:</p>
+            <table class="meta-table">
+                <tr>
+                    <td class="label">Total In Playlist</td>
+                    <td class="value">{{ TOTAL_FOUND }} items</td>
+                </tr>
+                <tr>
+                    <td class="label">Newly Transmitted</td>
+                    <td class="value" style="color: #4ade80; font-weight: bold;">{{ TOTAL_NEW }} files</td>
+                </tr>
+                <tr>
+                    <td class="label">Already In Archive</td>
+                    <td class="value" style="color: #38bdf8;">{{ TOTAL_ARCHIVED }} files</td>
+                </tr>
+                <tr>
+                    <td class="label">Failed / Errors</td>
+                    <td class="value" style="color: #f87171; font-weight: bold;">{{ TOTAL_FAILED }} items</td>
+                </tr>
+                <tr>
+                    <td class="label">Execution Time</td>
+                    <td class="value">{{ ELAPSED_MINUTES }} minutes</td>
+                </tr>
+            </table>
+
+            <!-- Newly Downloaded Section -->
+            <div class="section-title" style="color: #4ade80;">Newly Transmitted Audio Tracks:</div>
+            <div class="track-list">{{ SUCCESS_LIST_HTML }}</div>
+
+            <!-- Archived / Skipped Section -->
+            <div class="section-title" style="color: #38bdf8;">Skipped (Already In Archive):</div>
+            <div class="track-list">{{ ARCHIVED_LIST_HTML }}</div>
+
+            <!-- Errors Section -->
+            {{ ERROR_SECTION_HTML }}
+        </div>
+        <div class="footer">
+            YoutubeSync Automation Engine
+        </div>
+    </div>
+</body>
+</html>
