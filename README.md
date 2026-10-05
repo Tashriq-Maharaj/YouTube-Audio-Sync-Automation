@@ -2,18 +2,18 @@
 
 A Python-based automation tool for synchronizing audio from a configured YouTube playlist to a local media library.
 
-The application downloads new items as MP3 files, keeps track of previously processed videos, records download information in Microsoft SQL Server, and sends HTML email notifications with a summary of each transfer.
+The application downloads new items as MP3 files, keeps track of previously processed videos, records download information in Microsoft SQL Server, and sends Telegram notifications with real-time transfer status and summary reports.
 
 ## Features
 
 * Downloads the best available audio from YouTube and converts it to MP3 using FFmpeg.
 * Automatically skips videos that have already been processed.
 * Records downloaded media and metadata in Microsoft SQL Server.
-* Sends HTML email notifications when a transfer starts and finishes.
-* Reports failed or unavailable items in the completion email.
+* Sends Telegram bot notifications when a transfer starts and finishes.
+* Reports failed or unavailable items directly in Telegram.
 * Provides a summary of newly downloaded, archived, and failed items.
 * Uses environment variables for configuration instead of hard-coded credentials.
-* Uses separate HTML templates for email notifications and reports.
+* Zero third-party dependencies for messaging (uses standard library `urllib` for Telegram Bot API).
 
 ## How It Works
 
@@ -21,15 +21,15 @@ The application follows a simple automated workflow:
 
 1. Loads configuration from a `.env` file.
 2. Validates the required playlist configuration.
-3. Reads the local download archive to identify previously processed videos.
-4. Extracts the playlist metadata using `yt-dlp`.
-5. Compares each video against the existing archive.
-6. Downloads new videos as audio.
-7. Converts the audio to MP3 using FFmpeg.
-8. Embeds available metadata and thumbnails.
-9. Records successful downloads in Microsoft SQL Server.
-10. Generates an HTML transfer report.
-11. Sends the report through an SMTP server.
+3. Sends a start notification via Telegram.
+4. Reads the local download archive to identify previously processed videos.
+5. Extracts the playlist metadata using `yt-dlp`.
+6. Compares each video against the existing archive.
+7. Downloads new videos as audio.
+8. Converts the audio to MP3 using FFmpeg.
+9. Embeds available metadata and thumbnails.
+10. Records successful downloads in Microsoft SQL Server.
+11. Generates and sends a transfer summary report via Telegram.
 
 Previously processed videos are skipped using `yt-dlp`'s download archive functionality, helping prevent duplicate downloads.
 
@@ -40,18 +40,15 @@ Previously processed videos are skipped using `yt-dlp`'s download archive functi
 * **FFmpeg** – Audio extraction and MP3 conversion
 * **Microsoft SQL Server** – Download metadata and history
 * **pyodbc** – Python-to-SQL Server connectivity
-* **SMTP** – Email notifications
+* **Telegram Bot API** – Real-time status and report notifications
 * **python-dotenv** – Environment-based configuration
-* **HTML/CSS** – Email reporting templates
 
 ## Project Structure
 
 ```text
 YouTube-Audio-Sync/
 │
-├── main.py
-├── email_start.html
-├── email_report.html
+├── sync_playlist.py
 ├── archive.txt
 ├── requirements.txt
 ├── .env.example
@@ -69,7 +66,7 @@ Before running the application, install:
 * FFmpeg
 * Microsoft ODBC Driver for SQL Server
 * A Microsoft SQL Server instance
-* An SMTP account capable of sending email
+* A Telegram Bot token & Chat ID
 * Access to the YouTube playlist being processed
 
 ## Installation
@@ -137,18 +134,21 @@ MSSQL_USER=your-user
 MSSQL_PASSWORD=your-password
 MSSQL_DRIVER=ODBC Driver 18 for SQL Server
 
-BREVO_SMTP_HOST=smtp-relay.brevo.com
-BREVO_SMTP_PORT=587
-BREVO_USER=your-smtp-user
-BREVO_PASS=your-smtp-password
-
-SENDER_EMAIL=sender@example.com
-RECIPIENT_EMAIL=recipient@example.com
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrSTUvwxYZ
+TELEGRAM_CHAT_ID=123456789
 ```
 
 **Do not commit the `.env` file to GitHub.**
 
 The repository should contain `.env.example` with placeholder values instead.
+
+### Setting Up Telegram Notifications
+
+1. Open Telegram and search for `@BotFather`.
+2. Send `/newbot` and follow instructions to create a bot and get your **Bot Token**.
+3. Start a chat with your bot (or add it to a group/channel).
+4. Get your **Chat ID** (e.g., via `@userinfobot` or `https://api.telegram.org/bot<TOKEN>/getUpdates`).
+5. Add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` to your `.env` file.
 
 ## Database
 
@@ -167,26 +167,25 @@ The recorded information includes:
 
 The database connection is configured through environment variables, allowing the same application to be used with different database environments without changing the Python source code.
 
-## Email Reporting
+## Telegram Reporting
 
-The application sends two types of notifications:
+The application sends two notifications per run:
 
 ### Transfer Started
 
-A notification is sent when a synchronization run begins.
+A notification is sent when a synchronization run begins, displaying the playlist link, target directory, and audio format.
 
 ### Transfer Report
 
-At the end of the run, an HTML report provides:
+At the end of the run, a summary report provides:
 
-* Total items found
-* Newly downloaded items
-* Previously archived items
-* Failed items
-* Processing time
-* Error details where applicable
+* Total items found in playlist
+* Newly downloaded items (with track titles)
+* Previously archived items count
+* Failed items (with error descriptions)
+* Execution duration in minutes
 
-This provides a simple way to monitor an automated job without needing to manually inspect the server after every run.
+Messages exceeding Telegram's 4,096 character limit are automatically chunked cleanly across line boundaries.
 
 ## Archive Handling
 
@@ -206,30 +205,33 @@ Failures can include:
 * Download errors
 * Playlist extraction failures
 * Database logging failures
-* Email delivery failures
+* Telegram delivery failures
 
-Failed items are included in the final HTML report when applicable.
+Failed items are included in the final Telegram report when applicable.
 
 ## Running the Application
 
 After configuration is complete:
 
 ```bash
-python main.py
+python sync_playlist.py
 ```
 
 A typical run will:
 
 ```text
-Initializing YoutubeSync Engine...
+🚀 Initializing YoutubeSync Engine...
 Extracting playlist metadata...
-Found X items to process.
+📋 Found X items to process.
 
-[DOWNLOADING] Example Track
-[DOWNLOADED] Example Track
+▶️ (1/X) [DOWNLOADING]: Example Track
+    ✅ [DOWNLOADED]: Example Track
+    ✅ [DB LOG SUCCESS] Saved to MS SQL: Example Track
 
+==================================================
 FINISHED TRANSMISSION SUMMARY
 Processed X new / X archived / X failed out of X items.
+==================================================
 ```
 
 ## Security
@@ -239,8 +241,7 @@ Sensitive configuration is intentionally kept outside the source code.
 The project uses environment variables for:
 
 * Database credentials
-* SMTP credentials
-* Email addresses
+* Telegram credentials
 * Playlist configuration
 * Environment-specific filesystem paths
 
