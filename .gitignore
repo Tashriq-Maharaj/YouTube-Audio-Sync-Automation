@@ -2,3 +2,4 @@ venv/
 .env
 archive.txt
 __pycache__/
+cron.log
