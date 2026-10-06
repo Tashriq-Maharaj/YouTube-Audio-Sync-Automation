@@ -232,8 +232,10 @@ def main():
     # 1. Send Transfer Started Notification
     start_msg = (
         "🚀 <b>YouTube Audio Sync: TRANSFER STARTED</b>\n\n"
-        f"🔗 <b>Playlist:</b> <a href=\"{html.escape(PLAYLIST_URL)}\">{html.escape(PLAYLIST_URL)}</a>\n"
+        f"🔗 <b>Playlist:</b> <a href=\"{html.escape(PLAYLIST_URL)}\">{html.escape(PLAYLIST_URL)}</a>"
+        "\n\n"
         f"📁 <b>Destination:</b> <code>{html.escape(DOWNLOAD_DIR)}</code>\n"
+        "\n"
         "🎵 <b>Format:</b> MP3 Audio (V0 VBR)"
     )
     send_telegram_notification(start_msg)
